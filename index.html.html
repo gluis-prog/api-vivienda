@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predictor de Valor de Vivienda</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f7f5f0;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .page {
+      max-width: 660px;
+      margin: 0 auto;
+    }
+
+    .hero { margin-bottom: 1.5rem; }
+    .hero h1 {
+      font-size: 26px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+    .hero p {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .badges { margin-bottom: 1.25rem; display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 500;
+      padding: 4px 10px; border-radius: 6px;
+    }
+    .badge-green { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-blue  { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .card-label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: #9ca3af; margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 13px; color: #4b5563; font-weight: 500; }
+
+    .counter-wrap {
+      display: flex; align-items: center;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px; overflow: hidden;
+      background: #f9fafb;
+    }
+    .counter-btn {
+      width: 40px; height: 48px;
+      background: none; border: none;
+      font-size: 22px; color: #6b7280;
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: background 0.1s;
+    }
+    .counter-btn:hover { background: #f3f4f6; color: #1a1a2e; }
+    .counter-btn:active { transform: scale(0.92); }
+    .counter-display {
+      flex: 1; text-align: center;
+      font-size: 20px; font-weight: 600;
+      color: #1a1a2e; line-height: 48px;
+    }
+    .counter-hint { font-size: 11px; color: #9ca3af; text-align: center; }
+
+    .field-normal { display: flex; flex-direction: column; gap: 6px; }
+    .field-normal label { font-size: 13px; color: #4b5563; font-weight: 500; }
+    .field-normal input[type=number] {
+      width: 100%; height: 46px; padding: 0 12px;
+      font-size: 15px; border: 1px solid #e5e7eb;
+      border-radius: 10px; background: #f9fafb;
+      color: #1a1a2e; outline: none;
+    }
+    .field-normal input[type=number]:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+
+    .slider-row { display: flex; flex-direction: column; gap: 8px; }
+    .slider-row label { font-size: 13px; color: #4b5563; font-weight: 500; }
+    .slider-wrap { display: flex; align-items: center; gap: 12px; }
+    .slider-wrap input[type=range] {
+      flex: 1; accent-color: #1a1a2e;
+    }
+    .slider-val { font-size: 16px; font-weight: 600; color: #1a1a2e; min-width: 50px; text-align: right; }
+    .caption { font-size: 12px; color: #9ca3af; }
+
+    .btn-predict {
+      width: 100%; height: 50px;
+      background: #1a1a2e; color: white;
+      border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; margin-top: 0.25rem;
+      transition: opacity 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-predict:hover { opacity: 0.85; }
+    .btn-predict:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error-msg {
+      font-size: 13px; color: #991b1b;
+      background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: 10px; padding: 10px 14px;
+      margin-top: 10px; display: none;
+    }
+
+    .loading-msg {
+      font-size: 13px; color: #6b7280;
+      text-align: center; margin-top: 10px;
+      display: none;
+    }
+
+    .result-box {
+      background: white; border: 1px solid #e5e7eb;
+      border-radius: 14px; padding: 1.5rem;
+      text-align: center; margin-top: 1rem;
+      display: none;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .result-box.show { display: block; }
+
+    .result-label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #9ca3af; margin-bottom: 8px;
+    }
+    .result-value {
+      font-size: 46px; font-weight: 700;
+      color: #1a1a2e; margin-bottom: 4px;
+    }
+    .result-sub { font-size: 12px; color: #6b7280; margin-bottom: 1rem; }
+
+    .divider { border: none; border-top: 1px solid #f3f4f6; margin: 1rem 0; }
+
+    .metrics-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 1rem 0; }
+    .metric-item {
+      background: #f9fafb; border: 1px solid #f3f4f6;
+      border-radius: 10px; padding: 10px 12px;
+    }
+    .metric-item .m-label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+    .metric-item .m-val { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+
+    .derived { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .derived-item {
+      background: #f9fafb; border: 1px solid #f3f4f6;
+      border-radius: 10px; padding: 10px 12px;
+    }
+    .derived-item .d-label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+    .derived-item .d-val { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+
+    .warning {
+      font-size: 12px; color: #92400e;
+      background: #fffbeb; border: 1px solid #fde68a;
+      border-radius: 10px; padding: 10px 14px;
+      margin-top: 12px; line-height: 1.5; text-align: left;
+    }
+
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center; font-size: 12px;
+      color: #9ca3af; margin-top: 2rem;
+      padding-top: 1rem; border-top: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 500px) {
+      .grid3 { grid-template-columns: 1fr; }
+      .grid2 { grid-template-columns: 1fr; }
+      .metrics-row { grid-template-columns: 1fr; }
+      .derived { grid-template-columns: 1fr; }
+      .result-value { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <h1>🏠 Predictor de valor de vivienda</h1>
+    <p>Ingresa las características de la propiedad para estimar su valor de mercado en dólares (USD).</p>
+  </div>
+
+  <div class="badges">
+    <span class="badge badge-green">📈 Gradient Boosting · R² 0.81</span>
+    <span class="badge badge-blue">☁️ API en vivo · Railway</span>
+  </div>
+
+  <!-- Características principales -->
+  <div class="card">
+    <div class="card-label">🏠 Características de la vivienda</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Habitaciones</label>
+        <div class="counter-wrap">
+          <button class="counter-btn" onclick="cambiar('rooms',-1)">−</button>
+          <div class="counter-display" id="rooms-display">4</div>
+          <button class="counter-btn" onclick="cambiar('rooms',1)">+</button>
+        </div>
+        <span class="counter-hint">en el bloque</span>
+      </div>
+      <div class="field">
+        <label>Dormitorios</label>
+        <div class="counter-wrap">
+          <button class="counter-btn" onclick="cambiar('bedrooms',-1)">−</button>
+          <div class="counter-display" id="bedrooms-display">2</div>
+          <button class="counter-btn" onclick="cambiar('bedrooms',1)">+</button>
+        </div>
+        <span class="counter-hint">en el bloque</span>
+      </div>
+      <div class="field">
+        <label>Personas</label>
+        <div class="counter-wrap">
+          <button class="counter-btn" onclick="cambiar('population',-1)">−</button>
+          <div class="counter-display" id="population-display">3</div>
+          <button class="counter-btn" onclick="cambiar('population',1)">+</button>
+        </div>
+        <span class="counter-hint">en el bloque</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bloque residencial -->
+  <div class="card">
+    <div class="card-label">🏘️ Datos del bloque residencial</div>
+    <div class="grid2">
+      <div class="field-normal">
+        <label for="households">Número de hogares</label>
+        <input type="number" id="households" value="499" min="1" max="7000" step="1">
+      </div>
+      <div class="field-normal">
+        <label for="age">Antigüedad mediana (años)</label>
+        <input type="number" id="age" value="29" min="1" max="52" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingreso -->
+  <div class="card">
+    <div class="card-label">💵 Ingreso del vecindario</div>
+    <div class="slider-row">
+      <label for="income">Ingreso mediano del hogar <span style="color:#9ca3af;font-weight:400">(decenas de miles USD)</span></label>
+      <div class="slider-wrap">
+        <input type="range" id="income" min="0.5" max="15" step="0.01" value="3.87">
+        <span class="slider-val" id="income-val">3.87</span>
+      </div>
+      <p class="caption" id="income-caption">Equivale a aproximadamente $38,700 USD anuales por hogar</p>
+    </div>
+  </div>
+
+  <button class="btn-predict" id="btn-predict" onclick="predecir()">
+    🧮 Estimar valor de la vivienda
+  </button>
+  <div class="error-msg" id="error-msg"></div>
+  <div class="loading-msg" id="loading-msg">⏳ Consultando el modelo... por favor espera</div>
+
+  <!-- Resultado -->
+  <div class="result-box" id="result-box">
+    <div class="result-label">Valor estimado de la vivienda</div>
+    <div class="result-value" id="result-value">$0</div>
+    <div class="result-sub">USD · Gradient Boosting · Predicción real del modelo</div>
+    <hr class="divider">
+    <div class="metrics-row">
+      <div class="metric-item"><div class="m-label">Precisión (R²)</div><div class="m-val">0.81 / 1.00</div></div>
+      <div class="metric-item"><div class="m-label">Error promedio</div><div class="m-val">$32,991</div></div>
+      <div class="metric-item"><div class="m-label">Error cuadrático</div><div class="m-val">$51,166</div></div>
+    </div>
+    <div class="derived" id="derived-vars"></div>
+    <div class="warning">⚠️ Estimación estadística basada en datos históricos de California. No reemplaza una tasación profesional.</div>
+  </div>
+
+  <footer>
+    Modelo de Regresión · Dataset California Housing · Desarrollado con FastAPI + Railway
+  </footer>
+
+</div>
+
+<script>
+  const API_URL = 'https://api-vivienda-production.up.railway.app/predecir';
+
+  const counts = { rooms: 4, bedrooms: 2, population: 3 };
+  const mins   = { rooms: 1, bedrooms: 1, population: 1 };
+  const maxs   = { rooms: 500, bedrooms: 300, population: 2000 };
+
+  function cambiar(key, delta) {
+    counts[key] = Math.min(maxs[key], Math.max(mins[key], counts[key] + delta));
+    document.getElementById(key + '-display').textContent = counts[key];
+  }
+
+  const incomeEl  = document.getElementById('income');
+  const incomeVal = document.getElementById('income-val');
+  const incomeCap = document.getElementById('income-caption');
+
+  incomeEl.addEventListener('input', () => {
+    const v = parseFloat(incomeEl.value);
+    incomeVal.textContent = v.toFixed(2);
+    incomeCap.textContent = 'Equivale a aproximadamente $' +
+      Math.round(v * 10000).toLocaleString('es-CO') + ' USD anuales por hogar';
+  });
+
+  async function predecir() {
+    const errorEl   = document.getElementById('error-msg');
+    const loadingEl = document.getElementById('loading-msg');
+    const btnEl     = document.getElementById('btn-predict');
+    errorEl.style.display = 'none';
+
+    const rooms = counts.rooms;
+    const beds  = counts.bedrooms;
+    const pop   = counts.population;
+    const hh    = parseInt(document.getElementById('households').value) || 1;
+    const age   = parseInt(document.getElementById('age').value) || 29;
+    const inc   = parseFloat(incomeEl.value);
+
+    if (hh < 1) {
+      errorEl.textContent = 'El número de hogares debe ser al menos 1.';
+      errorEl.style.display = 'block'; return;
+    }
+    if (beds > rooms) {
+      errorEl.textContent = 'Los dormitorios no pueden superar el total de habitaciones.';
+      errorEl.style.display = 'block'; return;
+    }
+
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span class="spinner"></span> Calculando...';
+    loadingEl.style.display = 'block';
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          housing_median_age: age,
+          total_rooms:        rooms,
+          total_bedrooms:     beds,
+          population:         pop,
+          households:         hh,
+          median_income:      inc
+        })
+      });
+
+      if (!response.ok) throw new Error('Error en la API: ' + response.status);
+
+      const data = await response.json();
+      const pred = data.valor_estimado;
+      const vars = data.variables_derivadas;
+
+      document.getElementById('result-value').textContent =
+        '$' + Math.round(pred).toLocaleString('es-CO');
+
+      document.getElementById('derived-vars').innerHTML = `
+        <div class="derived-item"><div class="d-label">Habitaciones / hogar</div><div class="d-val">${vars.habitaciones_por_hogar}</div></div>
+        <div class="derived-item"><div class="d-label">Dormitorios / habitación</div><div class="d-val">${vars.dormitorios_por_habitacion}</div></div>
+        <div class="derived-item"><div class="d-label">Personas / hogar</div><div class="d-val">${vars.personas_por_hogar}</div></div>
+      `;
+
+      const box = document.getElementById('result-box');
+      box.classList.add('show');
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    } catch (err) {
+      errorEl.textContent = 'No se pudo conectar con la API. Verifica que Railway esté activo. Error: ' + err.message;
+      errorEl.style.display = 'block';
+    } finally {
+      btnEl.disabled = false;
+      btnEl.innerHTML = '🧮 Estimar valor de la vivienda';
+      loadingEl.style.display = 'none';
+    }
+  }
+</script>
+</body>
+</html>
